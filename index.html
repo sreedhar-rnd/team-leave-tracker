@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Leave Tracker</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;color:#1a1a1a;background:#f5f6f8;min-height:100vh}
+  .app{max-width:700px;margin:0 auto;padding:1.5rem 1rem}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+  .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s}
+  .btn:hover{background:#f3f4f6}
+  .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+  .btn.primary:hover{background:#1d4ed8}
+  .btn.danger{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+  .btn.danger:hover{background:#fee2e2}
+  .btn.success{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0}
+  .btn.sm{padding:5px 10px;font-size:12px}
+  select,input[type=text],input[type=date]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit}
+  select:focus,input:focus{outline:2px solid #2563eb;outline-offset:1px;border-color:#2563eb}
+  label{font-size:12px;color:#6b7280;display:block;margin-bottom:4px;font-weight:500}
+  .field{margin-bottom:12px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px}
+  .badge.PL{background:#eff6ff;color:#1d4ed8}
+  .badge.SL{background:#fffbeb;color:#b45309}
+  .badge.EL{background:#fef2f2;color:#dc2626}
+  .badge.HD{background:#f5f3ff;color:#7c3aed}
+  h1{font-size:22px;font-weight:600}
+  h2{font-size:18px;font-weight:600}
+  h3{font-size:15px;font-weight:600}
+  .muted{color:#9ca3af;font-size:12px}
+  .sec{color:#6b7280;font-size:13px}
+  .tab-bar{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
+  .tab{padding:7px 14px;border-radius:8px;border:1px solid #e5e7eb;font-size:13px;cursor:pointer;background:#fff;color:#6b7280;font-family:inherit;transition:all .15s}
+  .tab.active{background:#fff;border-color:#2563eb;color:#2563eb;font-weight:600}
+  .leave-row{padding:10px 0;border-bottom:1px solid #f3f4f6;display:flex;align-items:flex-start;gap:10px}
+  .leave-row:last-child{border-bottom:none}
+  .avatar{width:32px;height:32px;border-radius:50%;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .stat{background:#f9fafb;border-radius:8px;padding:12px;text-align:center;border:1px solid #f3f4f6}
+  .stat-num{font-size:22px;font-weight:700;line-height:1}
+  .stat-lbl{font-size:11px;color:#9ca3af;margin-top:3px}
+  .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1rem}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;font-weight:500}
+  .alert.ok{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+  .alert.err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+  .range-toggle{display:flex;gap:4px;margin-bottom:10px}
+  .range-toggle button{padding:5px 12px;font-size:12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;color:#6b7280;font-family:inherit;transition:all .15s}
+  .range-toggle button.on{background:#eff6ff;border-color:#2563eb;color:#2563eb;font-weight:600}
+  .rpt-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .rpt-table th{text-align:left;padding:8px 10px;font-weight:600;font-size:11px;color:#6b7280;border-bottom:2px solid #e5e7eb;text-transform:uppercase;letter-spacing:.5px}
+  .rpt-table td{padding:8px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+  .rpt-table tr:last-child td{border-bottom:none}
+  .rpt-table tr:hover td{background:#f9fafb}
+  .header-bar{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #e5e7eb}
+  .logo{width:36px;height:36px;border-radius:10px;background:#2563eb;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0}
+  .empty{text-align:center;padding:2rem 1rem;color:#9ca3af}
+  .empty svg{margin:0 auto 8px;display:block;opacity:.3}
+  @media(max-width:480px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LOGIN -->
+  <div id="sc-select" class="card">
+    <div style="text-align:center;padding:1rem 0 1.5rem">
+      <div class="logo" style="margin:0 auto 12px;width:48px;height:48px;font-size:22px">📅</div>
+      <h1 style="margin-bottom:4px">Team Leave Tracker</h1>
+      <p class="sec">Select your name to continue</p>
+    </div>
+    <div class="field">
+      <label>Who are you?</label>
+      <select id="name-sel">
+        <option value="">— select your name —</option>
+        <option value="__manager__">🔑 Manager (admin)</option>
+        <optgroup label="Team members">
+          <option>Alice</option><option>Bob</option><option>Charlie</option><option>Diana</option>
+          <option>Edward</option><option>Fatima</option><option>George</option><option>Hannah</option>
+          <option>Ivan</option><option>Julia</option>
+        </optgroup>
+      </select>
+    </div>
+    <button class="btn primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Continue →</button>
+    <p class="muted" style="text-align:center;margin-top:10px">Manager access: view all, add, edit and generate reports</p>
+  </div>
+
+  <!-- MEMBER SCREEN -->
+  <div id="sc-member" style="display:none">
+    <div class="header-bar">
+      <div class="logo">👤</div>
+      <div>
+        <h2 id="m-greeting" style="margin-bottom:0"></h2>
+        <p class="muted">Your leave summary</p>
+      </div>
+      <button class="btn sm" style="margin-left:auto" onclick="doLogout()">⇄ Switch</button>
+    </div>
+    <div id="m-alert"></div>
+    <div class="grid4" id="m-stats"></div>
+    <div class="card">
+      <h3 style="margin-bottom:12px">+ Apply for leave</h3>
+      <div class="field">
+        <label>Leave type</label>
+        <select id="m-type">
+          <option value="PL">Planned leave (PL)</option>
+          <option value="SL">Sick leave (SL)</option>
+          <option value="EL">Emergency / Adhoc (EL)</option>
+          <option value="HD">Half day (HD)</option>
+        </select>
+      </div>
+      <div class="range-toggle">
+        <button class="on" id="m-single-btn" onclick="toggleRange('m',false)">Single day</button>
+        <button id="m-range-btn" onclick="toggleRange('m',true)">Date range</button>
+      </div>
+      <div id="m-single-fields" class="field">
+        <label>Date</label><input type="date" id="m-date">
+      </div>
+      <div id="m-range-fields" style="display:none">
+        <div class="grid2">
+          <div class="field"><label>From</label><input type="date" id="m-from"></div>
+          <div class="field"><label>To</label><input type="date" id="m-to"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Reason <span class="muted">(optional)</span></label>
+        <input type="text" id="m-reason" placeholder="e.g. family function, fever...">
+      </div>
+      <button class="btn primary" onclick="memberApply()">Submit leave</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:12px">◷ My leave history</h3>
+      <div id="m-history"></div>
+    </div>
+  </div>
+
+  <!-- MANAGER SCREEN -->
+  <div id="sc-manager" style="display:none">
+    <div class="header-bar">
+      <div class="logo">🔑</div>
+      <div>
+        <h2 style="margin-bottom:0">Manager dashboard</h2>
+        <p class="muted">All team leaves</p>
+      </div>
+      <button class="btn sm" style="margin-left:auto" onclick="doLogout()">⇄ Switch</button>
+    </div>
+    <div id="mg-alert"></div>
+    <div class="grid4" id="mg-stats"></div>
+    <div class="tab-bar">
+      <button class="tab active" onclick="mgTab('all',this)">📋 All leaves</button>
+      <button class="tab" onclick="mgTab('add',this)">➕ Add leave</button>
+      <button class="tab" onclick="mgTab('report',this)">📊 Generate report</button>
+    </div>
+
+    <!-- ALL LEAVES -->
+    <div id="mg-all">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <select id="f-member" style="flex:1;width:auto" onchange="renderMgList()"><option value="">All members</option></select>
+        <select id="f-type" style="flex:1;width:auto" onchange="renderMgList()">
+          <option value="">All types</option>
+          <option value="PL">Planned leave</option><option value="SL">Sick leave</option>
+          <option value="EL">Emergency / Adhoc</option><option value="HD">Half day</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0.75rem 1.25rem"><div id="mg-list"></div></div>
+    </div>
+
+    <!-- ADD LEAVE -->
+    <div id="mg-add" style="display:none" class="card">
+      <h3 style="margin-bottom:12px">Add leave for a team member</h3>
+      <div class="grid2">
+        <div class="field"><label>Member</label><select id="mg-who"><option value="">— select member —</option></select></div>
+        <div class="field"><label>Leave type</label>
+          <select id="mg-type">
+            <option value="PL">Planned leave (PL)</option><option value="SL">Sick leave (SL)</option>
+            <option value="EL">Emergency / Adhoc (EL)</option><option value="HD">Half day (HD)</option>
+          </select>
+        </div>
+      </div>
+      <div class="range-toggle">
+        <button class="on" id="mg-single-btn" onclick="toggleRange('mg',false)">Single day</button>
+        <button id="mg-range-btn" onclick="toggleRange('mg',true)">Date range</button>
+      </div>
+      <div id="mg-single-fields" class="field"><label>Date</label><input type="date" id="mg-date"></div>
+      <div id="mg-range-fields" style="display:none">
+        <div class="grid2">
+          <div class="field"><label>From</label><input type="date" id="mg-from"></div>
+          <div class="field"><label>To</label><input type="date" id="mg-to"></div>
+        </div>
+      </div>
+      <div class="field"><label>Reason <span class="muted">(optional)</span></label><input type="text" id="mg-reason" placeholder="e.g. sick, personal..."></div>
+      <button class="btn primary" onclick="mgAddLeave()">Add leave entry</button>
+    </div>
+
+    <!-- REPORT -->
+    <div id="mg-report" style="display:none" class="card">
+      <h3 style="margin-bottom:12px">📊 Generate report</h3>
+      <div class="grid2">
+        <div class="field">
+          <label>Report period</label>
+          <select id="rpt-preset" onchange="onPresetChange()">
+            <option value="today">Today</option>
+            <option value="thisweek">This week</option>
+            <option value="lastweek">Last week</option>
+            <option value="thismonth">This month</option>
+            <option value="lastmonth">Last month</option>
+            <option value="thisyear">This year</option>
+            <option value="custom">Custom date range</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Filter by member</label>
+          <select id="rpt-member"><option value="">All members</option></select>
+        </div>
+      </div>
+      <div id="rpt-custom" style="display:none">
+        <div class="grid2">
+          <div class="field"><label>From</label><input type="date" id="rpt-from"></div>
+          <div class="field"><label>To</label><input type="date" id="rpt-to"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Filter by leave type</label>
+        <select id="rpt-type">
+          <option value="">All types</option>
+          <option value="PL">Planned leave</option><option value="SL">Sick leave</option>
+          <option value="EL">Emergency / Adhoc</option><option value="HD">Half day</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" onclick="genReport()">▶ Generate</button>
+        <button class="btn success" id="csv-btn" style="display:none" onclick="downloadCSV()">⬇ Download CSV</button>
+      </div>
+      <div id="rpt-out" style="margin-top:1rem"></div>
+    </div>
+  </div>
+
+</div>
+<script>
+const MEMBERS=['Alice','Bob','Charlie','Diana','Edward','Fatima','George','Hannah','Ivan','Julia'];
+const TYPE_LABEL={PL:'Planned leave',SL:'Sick leave',EL:'Emergency / Adhoc',HD:'Half day'};
+let leaves=[];
+try{leaves=JSON.parse(localStorage.getItem('tlt_data')||'[]');}catch(e){}
+let currentUser=null;
+let isRangeMode={m:false,mg:false};
+let lastReport=[];
+
+function save(){try{localStorage.setItem('tlt_data',JSON.stringify(leaves));}catch(e){}}
+
+function today(){return new Date().toISOString().split('T')[0];}
+
+function fmtDate(d){
+  const dt=new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function expandDates(from,to){
+  const dates=[];
+  let cur=new Date(from+'T00:00:00');
+  const end=new Date(to+'T00:00:00');
+  while(cur<=end){dates.push(cur.toISOString().split('T')[0]);cur.setDate(cur.getDate()+1);}
+  return dates;
+}
+
+function initDates(){
+  const t=today();
+  ['m-date','mg-date','m-from','m-to','mg-from','mg-to','rpt-from','rpt-to'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value=t;
+  });
+}
+
+function showAlert(id,msg,type='ok'){
+  const el=document.getElementById(id);
+  el.innerHTML=`<div class="alert ${type}">${msg}</div>`;
+  setTimeout(()=>el.innerHTML='',3500);
+}
+
+function badge(type){return `<span class="badge ${type}">${type}</span>`;}
+
+function doLogin(){
+  const v=document.getElementById('name-sel').value;
+  if(!v){return;}
+  currentUser=v;
+  document.getElementById('sc-select').style.display='none';
+  if(v==='__manager__'){
+    document.getElementById('sc-manager').style.display='block';
+    populateMgSelects();renderMgStats();renderMgList();
+  } else {
+    document.getElementById('sc-member').style.display='block';
+    document.getElementById('m-greeting').textContent='Hi, '+v;
+    renderMemberStats();renderMemberHistory();
+  }
+  initDates();
+}
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('sc-member').style.display='none';
+  document.getElementById('sc-manager').style.display='none';
+  document.getElementById('sc-select').style.display='block';
+  document.getElementById('name-sel').value='';
+}
+
+function toggleRange(ctx,on){
+  isRangeMode[ctx]=on;
+  document.getElementById(ctx+'-single-btn').classList.toggle('on',!on);
+  document.getElementById(ctx+'-range-btn').classList.toggle('on',on);
+  document.getElementById(ctx+'-single-fields').style.display=on?'none':'block';
+  document.getElementById(ctx+'-range-fields').style.display=on?'block':'none';
+}
+
+function memberApply(){
+  const type=document.getElementById('m-type').value;
+  const reason=document.getElementById('m-reason').value.trim();
+  let datesToAdd=[];
+  if(isRangeMode.m){
+    const fr=document.getElementById('m-from').value;
+    const to=document.getElementById('m-to').value;
+    if(!fr||!to){showAlert('m-alert','Select both from and to dates.','err');return;}
+    if(fr>to){showAlert('m-alert','From date must be before to date.','err');return;}
+    datesToAdd=expandDates(fr,to);
+  } else {
+    const d=document.getElementById('m-date').value;
+    if(!d){showAlert('m-alert','Select a date.','err');return;}
+    datesToAdd=[d];
+  }
+  const dups=datesToAdd.filter(d=>leaves.find(l=>l.member===currentUser&&l.date===d));
+  if(dups.length){showAlert('m-alert','Leave already exists for: '+dups.map(fmtDate).join(', '),'err');return;}
+  datesToAdd.forEach(d=>leaves.push({id:Date.now()+Math.random(),member:currentUser,type,date:d,reason,by:'self'}));
+  save();
+  document.getElementById('m-reason').value='';
+  renderMemberStats();renderMemberHistory();
+  showAlert('m-alert',datesToAdd.length+' day(s) submitted successfully.');
+}
+
+function renderMemberStats(){
+  const my=leaves.filter(l=>l.member===currentUser);
+  const c={PL:0,SL:0,EL:0,HD:0};
+  my.forEach(l=>c[l.type]=(c[l.type]||0)+1);
+  document.getElementById('m-stats').innerHTML=`
+    <div class="stat"><div class="stat-num">${my.length}</div><div class="stat-lbl">Total days</div></div>
+    <div class="stat"><div class="stat-num" style="color:#2563eb">${c.PL}</div><div class="stat-lbl">Planned</div></div>
+    <div class="stat"><div class="stat-num" style="color:#d97706">${c.SL}</div><div class="stat-lbl">Sick</div></div>
+    <div class="stat"><div class="stat-num" style="color:#dc2626">${c.EL}</div><div class="stat-lbl">Emergency</div></div>`;
+}
+
+function renderMemberHistory(){
+  const my=leaves.filter(l=>l.member===currentUser).sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('m-history');
+  if(!my.length){el.innerHTML='<div class="empty"><p>No leaves applied yet.</p></div>';return;}
+  el.innerHTML=my.map(l=>`<div class="leave-row">
+    <div style="flex:1">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px">
+        ${badge(l.type)}<span class="sec">${fmtDate(l.date)}</span>
+        ${l.by==='manager'?'<span class="muted">(added by manager)</span>':''}
+      </div>
+      ${l.reason?`<p class="muted">${l.reason}</p>`:''}
+    </div>
+  </div>`).join('');
+}
+
+function populateMgSelects(){
+  ['f-member','mg-who','rpt-member'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const first=id==='mg-who'?'<option value="">— select member —</option>':'<option value="">All members</option>';
+    el.innerHTML=first+MEMBERS.map(m=>`<option>${m}</option>`).join('');
+  });
+}
+
+function renderMgStats(){
+  const c={PL:0,SL:0,EL:0,HD:0};
+  leaves.forEach(l=>c[l.type]=(c[l.type]||0)+1);
+  document.getElementById('mg-stats').innerHTML=`
+    <div class="stat"><div class="stat-num">${leaves.length}</div><div class="stat-lbl">Total leaves</div></div>
+    <div class="stat"><div class="stat-num" style="color:#2563eb">${c.PL}</div><div class="stat-lbl">Planned</div></div>
+    <div class="stat"><div class="stat-num" style="color:#d97706">${c.SL}</div><div class="stat-lbl">Sick</div></div>
+    <div class="stat"><div class="stat-num" style="color:#dc2626">${c.EL}</div><div class="stat-lbl">Emergency</div></div>`;
+}
+
+function renderMgList(){
+  const fm=document.getElementById('f-member').value;
+  const ft=document.getElementById('f-type').value;
+  const rows=leaves.filter(l=>{
+    if(fm&&l.member!==fm)return false;
+    if(ft&&l.type!==ft)return false;
+    return true;
+  }).sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('mg-list');
+  if(!rows.length){el.innerHTML='<div class="empty"><p>No records found.</p></div>';return;}
+  el.innerHTML=rows.map(l=>`<div class="leave-row">
+    <div class="avatar">${l.member.slice(0,2).toUpperCase()}</div>
+    <div style="flex:1">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px">
+        <span style="font-weight:600;font-size:13px">${l.member}</span>
+        ${badge(l.type)}<span class="muted">${fmtDate(l.date)}</span>
+      </div>
+      ${l.reason?`<p class="muted">${l.reason}</p>`:''}
+    </div>
+    <button class="btn sm danger" onclick="delLeave(${JSON.stringify(l.id)})">🗑</button>
+  </div>`).join('');
+}
+
+function mgAddLeave(){
+  const who=document.getElementById('mg-who').value;
+  const type=document.getElementById('mg-type').value;
+  const reason=document.getElementById('mg-reason').value.trim();
+  if(!who){showAlert('mg-alert','Select a team member.','err');return;}
+  let datesToAdd=[];
+  if(isRangeMode.mg){
+    const fr=document.getElementById('mg-from').value;
+    const to=document.getElementById('mg-to').value;
+    if(!fr||!to){showAlert('mg-alert','Select both from and to dates.','err');return;}
+    if(fr>to){showAlert('mg-alert','From must be before to.','err');return;}
+    datesToAdd=expandDates(fr,to);
+  } else {
+    const d=document.getElementById('mg-date').value;
+    if(!d){showAlert('mg-alert','Select a date.','err');return;}
+    datesToAdd=[d];
+  }
+  const dups=datesToAdd.filter(d=>leaves.find(l=>l.member===who&&l.date===d));
+  if(dups.length){showAlert('mg-alert',who+' already has leave on: '+dups.map(fmtDate).join(', '),'err');return;}
+  datesToAdd.forEach(d=>leaves.push({id:Date.now()+Math.random(),member:who,type,date:d,reason,by:'manager'}));
+  save();
+  document.getElementById('mg-reason').value='';
+  renderMgStats();renderMgList();
+  showAlert('mg-alert',datesToAdd.length+' day(s) added for '+who+'.');
+}
+
+function delLeave(id){
+  if(!confirm('Delete this leave entry?'))return;
+  leaves=leaves.filter(l=>l.id!==id);
+  save();renderMgStats();renderMgList();
+}
+
+function mgTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['all','add','report'].forEach(t=>document.getElementById('mg-'+t).style.display=t===tab?'block':'none');
+}
+
+function getDateRange(preset){
+  const now=new Date();
+  const y=now.getFullYear(),mo=now.getMonth(),d=now.getDate();
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+  if(preset==='today'){const t=fmt(y,mo,d);return{from:t,to:t};}
+  if(preset==='thisweek'){
+    const dow=now.getDay();const mon=new Date(now);mon.setDate(d-(dow===0?6:dow-1));
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    return{from:fmt(mon.getFullYear(),mon.getMonth(),mon.getDate()),to:fmt(sun.getFullYear(),sun.getMonth(),sun.getDate())};
+  }
+  if(preset==='lastweek'){
+    const dow=now.getDay();const thismon=new Date(now);thismon.setDate(d-(dow===0?6:dow-1));
+    const lmon=new Date(thismon);lmon.setDate(thismon.getDate()-7);
+    const lsun=new Date(lmon);lsun.setDate(lmon.getDate()+6);
+    return{from:fmt(lmon.getFullYear(),lmon.getMonth(),lmon.getDate()),to:fmt(lsun.getFullYear(),lsun.getMonth(),lsun.getDate())};
+  }
+  if(preset==='thismonth'){return{from:fmt(y,mo,1),to:fmt(y,mo,new Date(y,mo+1,0).getDate())};}
+  if(preset==='lastmonth'){const lm=mo===0?11:mo-1;const ly=mo===0?y-1:y;return{from:fmt(ly,lm,1),to:fmt(ly,lm,new Date(ly,lm+1,0).getDate())};}
+  if(preset==='thisyear'){return{from:`${y}-01-01`,to:`${y}-12-31`};}
+  return null;
+}
+
+function onPresetChange(){
+  document.getElementById('rpt-custom').style.display=
+    document.getElementById('rpt-preset').value==='custom'?'block':'none';
+}
+
+function genReport(){
+  const preset=document.getElementById('rpt-preset').value;
+  const member=document.getElementById('rpt-member').value;
+  const type=document.getElementById('rpt-type').value;
+  let from,to;
+  if(preset==='custom'){
+    from=document.getElementById('rpt-from').value;
+    to=document.getElementById('rpt-to').value;
+    if(!from||!to){document.getElementById('rpt-out').innerHTML='<p class="muted">Select from and to dates.</p>';return;}
+    if(from>to){document.getElementById('rpt-out').innerHTML='<p class="muted">From must be before to.</p>';return;}
+  } else {
+    const r=getDateRange(preset);from=r.from;to=r.to;
+  }
+  const data=leaves.filter(l=>{
+    if(l.date<from||l.date>to)return false;
+    if(member&&l.member!==member)return false;
+    if(type&&l.type!==type)return false;
+    return true;
+  }).sort((a,b)=>a.date.localeCompare(b.date)||a.member.localeCompare(b.member));
+  lastReport=data;
+  const c={PL:0,SL:0,EL:0,HD:0};
+  data.forEach(l=>c[l.type]=(c[l.type]||0)+1);
+  const rangeStr=from===to?fmtDate(from):`${fmtDate(from)} — ${fmtDate(to)}`;
+  let html=`<hr style="border:none;border-top:1px solid #e5e7eb;margin-bottom:1rem">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div>
+        <p style="font-weight:600;font-size:14px">${rangeStr}</p>
+        <p class="muted">${data.length} record(s)${member?' · '+member:''}${type?' · '+type:''}</p>
+      </div>
+    </div>
+    <div class="grid4" style="margin-bottom:1rem">
+      <div class="stat"><div class="stat-num">${data.length}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-num" style="color:#2563eb">${c.PL}</div><div class="stat-lbl">Planned</div></div>
+      <div class="stat"><div class="stat-num" style="color:#d97706">${c.SL}</div><div class="stat-lbl">Sick</div></div>
+      <div class="stat"><div class="stat-num" style="color:#dc2626">${c.EL}</div><div class="stat-lbl">Emergency</div></div>
+    </div>`;
+  if(data.length){
+    html+=`<div style="overflow-x:auto"><table class="rpt-table">
+      <thead><tr><th>Date</th><th>Member</th><th>Type</th><th>Reason</th><th>Added by</th></tr></thead>
+      <tbody>${data.map(l=>`<tr>
+        <td class="sec">${fmtDate(l.date)}</td>
+        <td style="font-weight:600">${l.member}</td>
+        <td>${badge(l.type)}</td>
+        <td class="muted">${l.reason||'—'}</td>
+        <td class="muted">${l.by}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } else {
+    html+='<div class="empty"><p>No leave records for this period.</p></div>';
+  }
+  html+='</div>';
+  document.getElementById('rpt-out').innerHTML=html;
+  document.getElementById('csv-btn').style.display=data.length?'inline-flex':'none';
+}
+
+function downloadCSV(){
+  if(!lastReport.length)return;
+  const rows=[['Date','Member','Leave Type','Reason','Added By'],
+    ...lastReport.map(l=>[l.date,l.member,TYPE_LABEL[l.type]||l.type,l.reason||'',l.by])];
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='leave_report_'+today()+'.csv';a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
